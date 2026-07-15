@@ -8,9 +8,15 @@ const VIDEO_POLL = "https://apihub.agnes-ai.com/agnesapi";
 
 type Tab = "image" | "video";
 type ImageSize = "1K" | "2K" | "3K" | "4K";
+type VideoDimension = "480p" | "720p" | "1080p";
 
 const IMAGE_SIZES: ImageSize[] = ["1K", "2K", "3K", "4K"];
 const IMAGE_RATIOS = ["1:1", "4:3", "3:2", "16:9", "9:16", "21:9"];
+const VIDEO_DIMENSIONS: Record<VideoDimension, { width: number; height: number }> = {
+  "480p": { width: 854, height: 480 },
+  "720p": { width: 1280, height: 720 },
+  "1080p": { width: 1920, height: 1080 }
+};
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("image");
@@ -27,10 +33,9 @@ export default function Home() {
 
   // Video state
   const [vidPrompt, setVidPrompt] = useState("");
-  const [vidHeight, setVidHeight] = useState(576);
-  const [vidWidth, setVidWidth] = useState(1024);
-  const [vidFrames, setVidFrames] = useState(49);
-  const [vidFps, setVidFps] = useState(16);
+  const [vidDimension, setVidDimension] = useState<VideoDimension>("720p");
+  const [vidFrames, setVidFrames] = useState(121);
+  const [vidFps, setVidFps] = useState(24);
   const [vidSeed, setVidSeed] = useState<number | "">("");
   const [vidNegPrompt, setVidNegPrompt] = useState("");
   const [vidImageUrl, setVidImageUrl] = useState("");
@@ -110,12 +115,14 @@ export default function Home() {
     setPollStatus("");
     setLoading(true);
 
+    const { width, height } = VIDEO_DIMENSIONS[vidDimension];
+
     try {
       const body: Record<string, any> = {
         model: "agnes-video-v2.0",
         prompt: vidPrompt,
-        height: vidHeight,
-        width: vidWidth,
+        height,
+        width,
         num_frames: vidFrames,
         frame_rate: vidFps,
       };
@@ -288,7 +295,7 @@ export default function Home() {
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-[var(--text-primary)]">Agnes Tools</h1>
-        <p className="text-sm text-[var(--text-muted)] mt-1">AI Image &amp; Video Generation</p>
+        <p className="text-sm text-[var(--text-muted)] mt-1">AI Image & Video Generation</p>
       </div>
 
       {/* API Key */}
@@ -431,43 +438,43 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="vid-width">Width</label>
-              <input
-                id="vid-width"
-                type="number"
-                min={128}
-                max={2048}
-                value={vidWidth}
-                onChange={(e) => setVidWidth(Number(e.target.value))}
-              />
+              <label htmlFor="vid-dimension">Dimension Preset</label>
+              <select 
+                id="vid-dimension" 
+                value={vidDimension} 
+                onChange={(e) => setVidDimension(e.target.value as VideoDimension)}
+              >
+                <option value="480p">480p (854×480)</option>
+                <option value="720p">720p (1280×720)</option>
+                <option value="1080p">1080p (1920×1080)</option>
+              </select>
             </div>
             <div>
-              <label htmlFor="vid-height">Height</label>
+              <label htmlFor="vid-image-url">Image URL (optional)</label>
               <input
-                id="vid-height"
-                type="number"
-                min={128}
-                max={2048}
-                value={vidHeight}
-                onChange={(e) => setVidHeight(Number(e.target.value))}
+                id="vid-image-url"
+                type="url"
+                placeholder="https://example.com/image.jpg"
+                value={vidImageUrl}
+                onChange={(e) => setVidImageUrl(e.target.value)}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="vid-frames">Number of Frames</label>
+              <label htmlFor="vid-frames">Number of Frames (8n+1, ≤441)</label>
               <input
                 id="vid-frames"
                 type="number"
                 min={1}
-                max={256}
+                max={441}
                 value={vidFrames}
                 onChange={(e) => setVidFrames(Number(e.target.value))}
               />
             </div>
             <div>
-              <label htmlFor="vid-fps">Frame Rate</label>
+              <label htmlFor="vid-fps">Frame Rate (1-60)</label>
               <input
                 id="vid-fps"
                 type="number"
@@ -499,17 +506,6 @@ export default function Home() {
                 onChange={(e) => setVidNegPrompt(e.target.value)}
               />
             </div>
-          </div>
-
-          <div>
-            <label htmlFor="vid-image-url">Image URL (for image-to-video, optional)</label>
-            <input
-              id="vid-image-url"
-              type="url"
-              placeholder="https://example.com/image.jpg"
-              value={vidImageUrl}
-              onChange={(e) => setVidImageUrl(e.target.value)}
-            />
           </div>
 
           {/* Keyframe mode */}
@@ -558,7 +554,7 @@ export default function Home() {
       {/* Footer */}
       <div className="mt-12 text-center text-xs text-[var(--text-muted)] border-t border-[var(--border-color)] pt-6">
         Powered by <a href="https://agnes-ai.com" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">Agnes AI</a>
-        {" "}&middot;{" "}
+        {" "}·{" "}
         <a href="https://github.com/fizcodehouse/agnes-tools" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">GitHub</a>
       </div>
     </div>
